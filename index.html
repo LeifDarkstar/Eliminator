@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eliminator II">
+<title>Eliminator II</title>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', {scope: './'})
+      .then(() => console.log('Offline-Modus aktiv'))
+      .catch(() => {});
+  });
+}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f1117;
+  --surface:#1a1d24;
+  --surface2:#22262e;
+  --border:#2a2e3a;
+  --accent:#c8a84b;
+  --blue:#5b9bd5;
+  --red:#e05252;
+  --green:#52c875;
+  --text:#f0f0f0;
+  --text2:#8a8f9e;
+  --nav-h:72px;
+  --safe-top:env(safe-area-inset-top, 0px);
+  --safe-bot:env(safe-area-inset-bottom, 0px);
+}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--text);min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+
+/* ── Header ── */
+.header{
+  position:sticky;top:0;z-index:50;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:calc(var(--safe-top) + 14px) 20px 14px;
+}
+.header h1{font-size:20px;font-weight:700;color:var(--accent);letter-spacing:.02em}
+.header .sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── Pages ── */
+.page{display:none;padding:20px 18px;
+  padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 24px)}
+.page.active{display:block}
+
+/* ── Bottom Nav ── */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--nav-h) + var(--safe-bot));
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex;align-items:flex-start;
+  padding-top:8px;
+  z-index:100;
+}
+.nav button{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;background:none;border:none;
+  color:var(--text2);font-size:10px;font-weight:500;
+  letter-spacing:.04em;text-transform:uppercase;
+  padding:4px 0;cursor:pointer;
+}
+.nav button .ico{font-size:22px;line-height:1}
+.nav button.active{color:var(--accent)}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;color:var(--accent);
+  text-transform:uppercase;letter-spacing:.09em;margin-bottom:16px}
+
+/* ── Form ── */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;color:var(--text2);
+  margin-bottom:6px;font-weight:500}
+.field input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;color:var(--text);padding:14px 16px;
+  font-size:17px;font-weight:500;
+  appearance:textfield;-moz-appearance:textfield;
+}
+.field input::-webkit-inner-spin-button,
+.field input::-webkit-outer-spin-button{-webkit-appearance:none}
+.field input:focus{outline:none;border-color:var(--accent)}
+
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── Buttons ── */
+.btn-primary{
+  display:block;width:100%;padding:18px;
+  background:var(--accent);color:#111;border:none;
+  border-radius:14px;font-size:17px;font-weight:700;
+  cursor:pointer;letter-spacing:.02em;
+}
+.btn-primary:active{opacity:.85;transform:scale(.99)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--surface2);color:var(--text2);
+  border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:14px;cursor:pointer;
+}
+
+/* ── Shot rows ── */
+.shot-row{
+  display:grid;grid-template-columns:1fr 1fr 48px;
+  gap:10px;align-items:end;margin-bottom:12px;
+}
+.shot-row .field{margin-bottom:0}
+.shot-row .remove{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--red);border-radius:12px;
+  height:50px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;cursor:pointer;
+}
+.add-shot{
+  width:100%;background:none;border:1.5px dashed var(--border);
+  color:var(--text2);border-radius:12px;
+  padding:13px;font-size:14px;cursor:pointer;
+  margin-top:4px;
+}
+
+/* ── Target canvas ── */
+.target-wrap{display:flex;justify-content:center;padding:12px 0 4px}
+
+/* ── Result ── */
+.result-hero{
+  background:var(--surface2);border:1.5px solid var(--accent);
+  border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;
+}
+.result-hero .rl{font-size:12px;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.06em}
+.result-hero .rv{font-size:52px;font-weight:800;color:var(--accent);
+  line-height:1;margin:6px 0}
+.result-hero .rs{font-size:15px;font-weight:600}
+
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--border);font-size:15px;
+}
+.info-row:last-child{border-bottom:none}
+.info-row .k{color:var(--text2)}
+.info-row .v{font-weight:600}
+
+.notice{
+  background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);
+  border-radius:12px;padding:14px 16px;font-size:13px;
+  color:var(--text2);line-height:1.6;margin-bottom:14px;
+}
+.notice strong{color:var(--text)}
+
+/* ── Calibration badge ── */
+.cal-badge{
+  background:rgba(82,200,117,.1);border:1px solid rgba(82,200,117,.3);
+  border-radius:12px;padding:14px 16px;font-size:13px;
+  color:var(--text2);line-height:1.6;margin-bottom:14px;
+}
+.cal-badge strong{color:var(--green)}
+
+/* ── History ── */
+.session-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:12px;
+}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start}
+.sc-date{font-size:12px;color:var(--text2);margin-bottom:2px}
+.sc-label{font-size:12px;color:var(--text2)}
+.sc-dc{font-size:28px;font-weight:800;color:var(--text)}
+.sc-rec{font-size:28px;font-weight:800;color:var(--accent);text-align:right}
+.sc-stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;
+  padding-top:10px;border-top:1px solid var(--border)}
+.sc-stat{font-size:13px;color:var(--text2)}
+.sc-stat span{color:var(--text);font-weight:600}
+.sc-del{
+  background:none;border:none;color:var(--text2);
+  font-size:13px;cursor:pointer;padding:4px;
+  margin-top:4px;
+}
+
+/* ── Chart ── */
+.legend{
+  display:flex;gap:20px;justify-content:center;
+  font-size:12px;color:var(--text2);margin-top:12px;flex-wrap:wrap;
+}
+.legend span{display:flex;align-items:center;gap:6px}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty .ico{font-size:48px;margin-bottom:12px}
+.empty p{font-size:15px}
+
+/* ── Divider ── */
+.divider{height:1px;background:var(--border);margin:4px 0 16px}
+
+/* ── Direction toggle ── */
+.dir-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.dir-btn{
+  padding:14px 8px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text2);font-size:15px;font-weight:600;
+  cursor:pointer;text-align:center;transition:all .15s;
+}
+.dir-btn.selected{
+  background:rgba(200,168,75,.15);
+  border-color:var(--accent);color:var(--accent);
+}
+</style>
+</head>
+<body>
+
+<div id="safari-banner" style="display:none;background:#c8a84b;color:#111;
+  padding:14px 18px;font-size:14px;font-weight:600;line-height:1.5;text-align:center">
+  ⚠️ Bitte in <strong>Safari</strong> öffnen.<br>
+  <span style="font-weight:400;font-size:13px">Dateien-App → Lang drücken → Teilen → „In Safari öffnen"</span>
+</div>
+
+<div class="header">
+  <h1>Eliminator II</h1>
+  <div class="sub">Ballistik-Kalibrierung · K98 · 8×57 IS</div>
+</div>
+
+<!-- SESSION -->
+  <div id="page-session" class="page active">
+    <div class="card">
+      <div class="card-title">Session</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Datum</label>
+          <input type="text" id="s-date">
+        </div>
+        <div class="field">
+          <label>Drop Code</label>
+          <input type="text" id="s-dc" placeholder="180" inputmode="decimal">
+        </div>
+      </div>
+      <div id="dir-section" style="display:none">
+        <div class="divider"></div>
+        <div class="field">
+          <label>Höherer Drop Code bewegt Treffer nach …</label>
+          <div class="dir-toggle">
+            <button class="dir-btn selected" id="dir-up" onclick="setDir(1)">↑ Oben</button>
+            <button class="dir-btn" id="dir-dn" onclick="setDir(-1)">↓ Unten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Treffer 200 m</div>
+      <div id="list-200"></div>
+      <button class="add-shot" onclick="addShot(200)">+ Treffer hinzufügen</button>
+      <div class="target-wrap">
+        <canvas id="tgt-200" width="220" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Treffer 300 m</div>
+      <div id="list-300"></div>
+      <button class="add-shot" onclick="addShot(300)">+ Treffer hinzufügen</button>
+      <div class="target-wrap">
+        <canvas id="tgt-300" width="220" height="220"></canvas>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="runCalc()">Berechnen &amp; Speichern</button>
+    <div id="result-area" style="margin-top:16px"></div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="page-profil" class="page">
+    <div class="card">
+      <div class="card-title">Waffe</div>
+      <div class="field"><label>Bezeichnung</label>
+        <input type="text" id="p-name"></div>
+      <div class="field"><label>Kaliber</label>
+        <input type="text" id="p-cal"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Munition</div>
+      <div class="field"><label>Bezeichnung</label>
+        <input type="text" id="p-ammo"></div>
+      <div class="field-row">
+        <div class="field"><label>V0 (m/s)</label>
+          <input type="text" id="p-v0" inputmode="decimal"></div>
+        <div class="field"><label>BC (G1)</label>
+          <input type="text" id="p-bc" step="0.001" inputmode="decimal"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Optik-Höhe (cm)</label>
+          <input type="text" id="p-sh" step="0.5" inputmode="decimal"></div>
+        <div class="field"><label>Burris Drop Code</label>
+          <input type="text" id="p-basedc" inputmode="decimal"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Schalldämpfer</div>
+      <div class="field"><label>Modell</label>
+        <input type="text" id="p-supp"></div>
+    </div>
+    <button class="btn-primary" onclick="saveProfile()">Profil speichern</button>
+    <div id="p-saved" style="display:none;text-align:center;
+      padding:14px;color:var(--green);font-size:15px">✓ Gespeichert</div>
+  </div>
+
+  <!-- VERLAUF -->
+  <div id="page-verlauf" class="page">
+    <div id="history-list"></div>
+  </div>
+
+  <!-- KURVE -->
+  <div id="page-kurve" class="page">
+    <div class="card">
+      <div class="card-title">Kalibrierungskurve</div>
+      <canvas id="cal-chart" width="340" height="220"
+        style="width:100%;height:auto;border-radius:8px"></canvas>
+      <div class="legend">
+        <span><span style="width:12px;height:3px;background:var(--blue);
+          border-radius:2px;display:inline-block"></span>Theo. Abfall</span>
+        <span><span style="width:12px;height:3px;background:var(--accent);
+          border-radius:2px;display:inline-block"></span>Real (gefittet)</span>
+        <span><span style="width:8px;height:8px;border-radius:50%;
+          background:var(--red);display:inline-block"></span>Messpunkte</span>
+      </div>
+    </div>
+    <div class="card" id="card-cal-info">
+      <div class="card-title">Kalibrierungsfaktor</div>
+      <div id="cal-info-content">
+        <p style="font-size:14px;color:var(--text2)">Noch keine Sessions vorhanden.</p>
+      </div>
+    </div>
+<!-- Bottom Nav -->
+<div class="nav">
+  <button class="active" onclick="showPage('session',this)">
+    <span class="ico">🎯</span>Session
+  </button>
+  <button onclick="showPage('profil',this)">
+    <span class="ico">⚙️</span>Profil
+  </button>
+  <button onclick="showPage('verlauf',this)">
+    <span class="ico">📋</span>Verlauf
+  </button>
+  <button onclick="showPage('kurve',this)">
+    <span class="ico">📈</span>Kurve
+  </button>
+</div>
+
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────
+const SOS    = 343;
+const RHO    = 1.225;
+const GRAV   = 9.807;
+const BCCONV = 703.07;
+const DIST_750YD = 686;
+
+// ── G1 DRAG TABLE ─────────────────────────────────────────
+const G1 = [
+  [0.00,0.2629],[0.05,0.2558],[0.10,0.2487],[0.15,0.2413],[0.20,0.2344],
+  [0.25,0.2278],[0.30,0.2214],[0.35,0.2155],[0.40,0.2096],[0.45,0.2040],
+  [0.50,0.1956],[0.55,0.1880],[0.60,0.1837],[0.65,0.1806],[0.70,0.1765],
+  [0.75,0.1730],[0.80,0.1837],[0.85,0.2067],[0.875,0.2300],[0.90,0.2520],
+  [0.925,0.2804],[0.95,0.3005],[0.975,0.3209],[1.00,0.3374],[1.025,0.3450],
+  [1.05,0.3477],[1.075,0.3955],[1.10,0.4354],[1.125,0.4004],[1.15,0.3529],
+  [1.20,0.3004],[1.25,0.2732],[1.30,0.2547],[1.35,0.2413],[1.40,0.2302],
+  [1.45,0.2216],[1.50,0.2161],[1.60,0.2050],[1.70,0.1967],[1.80,0.1903],
+  [1.90,0.1837],[2.00,0.1781],[2.20,0.1679],[2.40,0.1600],[2.60,0.1537],
+  [2.80,0.1481],[3.00,0.1432]
+];
+function getCd(mach){
+  if(mach<=G1[0][0])return G1[0][1];
+  if(mach>=G1[G1.length-1][0])return G1[G1.length-1][1];
+  for(let i=0;i<G1.length-1;i++){
+    if(mach>=G1[i][0]&&mach<G1[i+1][0]){
+      const t=(mach-G1[i][0])/(G1[i+1][0]-G1[i][0]);
+      return G1[i][1]+t*(G1[i+1][1]-G1[i][1]);
+    }
+  }
+  return 0.25;
+}
+
+// ── BALLISTIC SOLVER ──────────────────────────────────────
+function simulate(v0,bcG1,sightH_m,angleDeg,maxDist){
+  const bcSI=bcG1*BCCONV;
+  const ang=angleDeg*Math.PI/180;
+  let vx=v0*Math.cos(ang),vy=v0*Math.sin(ang);
+  let x=0,y=-sightH_m;
+  const dt=0.005,pts=[{x,y}],limit=maxDist+10;
+  let g=0;
+  while(x<limit&&g++<60000){
+    const v=Math.sqrt(vx*vx+vy*vy);
+    if(v<20)break;
+    const drag=(RHO*v*v*getCd(v/SOS))/(2*bcSI);
+    vx+=(-drag*(vx/v))*dt;
+    vy+=(-GRAV-drag*(vy/v))*dt;
+    x+=vx*dt; y+=vy*dt;
+    pts.push({x,y});
+  }
+  return pts;
+}
+function heightAt(pts,dist){
+  for(let i=0;i<pts.length-1;i++){
+    if(pts[i].x<=dist&&pts[i+1].x>=dist){
+      const t=(dist-pts[i].x)/(pts[i+1].x-pts[i].x);
+      return pts[i].y+t*(pts[i+1].y-pts[i].y);
+    }
+  }
+  return null;
+}
+function trajectory(v0,bcG1,sightH_cm,zeroDist,maxDist){
+  const sH=sightH_cm/100;
+  let lo=-0.5,hi=2.0;
+  for(let i=0;i<50;i++){
+    const mid=(lo+hi)/2;
+    const h=heightAt(simulate(v0,bcG1,sH,mid,zeroDist+5),zeroDist);
+    if(h===null||h>0)hi=mid; else lo=mid;
+  }
+  const raw=simulate(v0,bcG1,sH,(lo+hi)/2,maxDist);
+  const zeroY=heightAt(raw,zeroDist)||0;
+  return raw.map(p=>({x:p.x,drop:(p.y-zeroY)*100}));
+}
+function dropAt(traj,dist){
+  for(let i=0;i<traj.length-1;i++){
+    if(traj[i].x<=dist&&traj[i+1].x>=dist){
+      const t=(dist-traj[i].x)/(traj[i+1].x-traj[i].x);
+      return traj[i].drop+t*(traj[i+1].drop-traj[i].drop);
+    }
+  }
+  return null;
+}
+
+// ── EMPIRICAL DROP CODE LOGIC ─────────────────────────────
+// Core insight: we don't need to know what a Drop Code "means" physically.
+// We just measure: for DC=X, deviation at 300m = Y cm.
+// Two or more such data points give us a linear relationship → find DC for Y=0.
+
+function getCalibrationData(){
+  // Returns sessions that have both a dropCode and a 300m mean deviation
+  return getSessions()
+    .filter(s => s.dropCode != null && s.mean300 != null)
+    .map(s => ({dc: s.dropCode, dev300: s.mean300, dev200: s.mean200}));
+}
+
+function linearFit(pts){
+  // pts = [{x, y}], returns {slope, intercept, r2}
+  const n=pts.length;
+  if(n<2)return null;
+  const mx=pts.reduce((a,p)=>a+p.x,0)/n;
+  const my=pts.reduce((a,p)=>a+p.y,0)/n;
+  const num=pts.reduce((a,p)=>a+(p.x-mx)*(p.y-my),0);
+  const den=pts.reduce((a,p)=>a+(p.x-mx)**2,0);
+  if(Math.abs(den)<0.001)return null;
+  const slope=num/den;
+  const intercept=my-slope*mx;
+  // R²
+  const ss_res=pts.reduce((a,p)=>a+(p.y-(slope*p.x+intercept))**2,0);
+  const ss_tot=pts.reduce((a,p)=>a+(p.y-my)**2,0);
+  const r2=ss_tot>0?1-ss_res/ss_tot:1;
+  return{slope,intercept,r2};
+}
+
+function computeRecommendation(currentDC){
+  const calPts = getCalibrationData();
+  const prof   = getProfile();
+
+  // Not enough data for empirical fit
+  if(calPts.length < 2){
+    // Conservative: if we have 1 point, use ±15 cap based on deviation direction
+    if(calPts.length === 1){
+      const dev = calPts[0].dev300;
+      const dir = getDir(); // +1: higher DC → shots up; -1: higher DC → shots down
+      // To correct upward deviation: if dir=+1 → lower DC; if dir=-1 → raise DC
+      const step = Math.min(Math.abs(dev) * 0.8, 15);
+      const suggested = Math.round(currentDC - dir * Math.sign(dev) * step);
+      return {
+        recDC: suggested,
+        diff: suggested - currentDC,
+        mode: 'conservative',
+        note: 'Erste Session: konservative Schätzung (max ±15). Nächste Session mit neuem Code für präzise Kalibrierung.',
+        factor: null, r2: null
+      };
+    }
+    return {recDC: null, diff: null, mode: 'nodata',
+      note: 'Zu wenige Datenpunkte. Treffer eintragen und berechnen.', factor: null, r2: null};
+  }
+
+  // Linear fit: dev300 = slope * DC + intercept → zero at DC = -intercept/slope
+  const fit = linearFit(calPts.map(p=>({x:p.dc, y:p.dev300})));
+  if(!fit || Math.abs(fit.slope) < 0.001){
+    return {recDC: null, diff: null, mode: 'flat',
+      note: 'Zu wenig Variation zwischen Sessions. Bitte anderen Drop Code ausprobieren.', factor: null, r2: null};
+  }
+
+  const optimalDC = Math.round(-fit.intercept / fit.slope);
+  // Safety cap: max ±30 from current DC (prevent wild jumps)
+  const capped = Math.max(currentDC - 30, Math.min(currentDC + 30, optimalDC));
+  const factor = -1 / fit.slope; // cm per DC unit at 300m (negative: higher DC = more correction = shots go up)
+  // Actually: slope = Δdev300/ΔDC. If higher DC → more holdover → shots go up (+) → slope > 0
+  // factor: |1/slope| = DC units needed per 1cm correction
+
+  return {
+    recDC: capped,
+    diff: capped - currentDC,
+    mode: capped === optimalDC ? 'exact' : 'capped',
+    note: capped !== optimalDC
+      ? `Optimaler Code wäre ${optimalDC}, aber Änderung auf ±30 begrenzt. Nächste Session zur Bestätigung.`
+      : null,
+    factor: Math.abs(factor).toFixed(1), // DC-Einheiten pro cm
+    r2: fit.r2,
+    optimalDC
+  };
+}
+
+// ── STORAGE ───────────────────────────────────────────────
+const DEFAULT_PROFILE={
+  name:'K98 1942',cal:'8×57 IS',ammo:'S&B SPCE 196 gr',
+  v0:790,bc:0.289,sh:4.5,basedc:180,supp:'A-TEC Optima 45'
+};
+// In-memory fallback when localStorage is unavailable (iOS file://)
+let _memProfile=null, _memSessions=null, _memDir=1;
+function _lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function _lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+function getProfile(){
+  if(_memProfile)return _memProfile;
+  try{return JSON.parse(_lsGet('e2_profile')||'null')||{...DEFAULT_PROFILE}}
+  catch(e){return{...DEFAULT_PROFILE}}
+}
+function storeProfile(p){
+  _memProfile=p;
+  _lsSet('e2_profile',JSON.stringify(p));
+}
+function getSessions(){
+  if(_memSessions!==null)return _memSessions;
+  try{const s=JSON.parse(_lsGet('e2_sessions')||'[]');_memSessions=s;return s}
+  catch(e){_memSessions=[];return[]}
+}
+function storeSessions(s){
+  _memSessions=s;
+  _lsSet('e2_sessions',JSON.stringify(s));
+}
+
+// ── SHOT STATE ────────────────────────────────────────────
+const shots={200:[],300:[]};
+
+function addShot(dist){
+  shots[dist].push({id:Date.now(),v:'',h:''});
+  renderShots(dist);
+}
+function removeShot(dist,id){
+  shots[dist]=shots[dist].filter(s=>s.id!==id);
+  renderShots(dist);
+  drawTarget('tgt-'+dist,shotPoints(dist));
+}
+function shotChange(dist,idx,field,val){
+  shots[dist][idx][field]=val;
+  drawTarget('tgt-'+dist,shotPoints(dist));
+}
+function shotPoints(dist){
+  return shots[dist].filter(s=>s.v!=='').map(s=>({v:parseFloat(s.v)||0,h:parseFloat(s.h)||0}));
+}
+function shotMean(dist){
+  const p=shotPoints(dist);
+  return p.length?p.reduce((a,x)=>a+x.v,0)/p.length:null;
+}
+
+function renderShots(dist){
+  const el=document.getElementById('list-'+dist);
+  if(!shots[dist].length){
+    el.innerHTML='<p style="font-size:14px;color:var(--text2);padding:0 0 8px">Noch keine Treffer.</p>';
+    drawTarget('tgt-'+dist,[]);
+    return;
+  }
+  el.innerHTML=shots[dist].map((s,i)=>`
+    <div class="shot-row">
+      <div class="field">
+        <label>Vertikal (cm)</label>
+        <input type="text" step="0.5" inputmode="decimal"
+          placeholder="+ oben / − unten" value="${s.v}"
+          oninput="shotChange(${dist},${i},'v',this.value)">
+      </div>
+      <div class="field">
+        <label>Horizontal (cm)</label>
+        <input type="text" step="0.5" inputmode="decimal"
+          placeholder="+ rechts" value="${s.h}"
+          oninput="shotChange(${dist},${i},'h',this.value)">
+      </div>
+      <button class="remove" onclick="removeShot(${dist},${s.id})">✕</button>
+    </div>`).join('');
+  drawTarget('tgt-'+dist,shotPoints(dist));
+}
+
+// ── TARGET ────────────────────────────────────────────────
+function drawTarget(id,pts){
+  const cv=document.getElementById(id);
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+  const scale=W/70; // ±35cm radius
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#080a0e';ctx.fillRect(0,0,W,H);
+
+  // Rings
+  [[35,'#0e1016'],[25,'#111318'],[16,'#13171f'],[9,'#171c25'],[4,'#1c2130']].forEach(([r,f])=>{
+    ctx.beginPath();ctx.arc(cx,cy,r*scale,0,Math.PI*2);
+    ctx.fillStyle=f;ctx.fill();
+    ctx.strokeStyle='#1e2535';ctx.lineWidth=1;ctx.stroke();
+  });
+
+  // Crosshair
+  ctx.strokeStyle='#232b3d';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx,4);ctx.lineTo(cx,H-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(4,cy);ctx.lineTo(W-4,cy);ctx.stroke();
+
+  ctx.fillStyle='#2e3648';ctx.font='10px -apple-system';ctx.textAlign='left';
+  ctx.fillText('±35 cm',4,H-4);
+
+  if(!pts.length)return;
+
+  const mv=pts.reduce((a,p)=>a+p.v,0)/pts.length;
+  const mh=pts.reduce((a,p)=>a+p.h,0)/pts.length;
+
+  pts.forEach(p=>{
+    const px=cx+p.h*scale,py=cy-p.v*scale;
+    ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,168,75,0.4)';ctx.fill();
+    ctx.strokeStyle='#c8a84b';ctx.lineWidth=1.5;ctx.stroke();
+  });
+
+  const mx2=cx+mh*scale,my2=cy-mv*scale;
+  ctx.beginPath();ctx.arc(mx2,my2,8,0,Math.PI*2);
+  ctx.fillStyle='rgba(224,82,82,0.8)';ctx.fill();
+  ctx.strokeStyle='#e05252';ctx.lineWidth=2;ctx.stroke();
+
+  ctx.fillStyle='#e05252';ctx.font='bold 12px -apple-system';ctx.textAlign='left';
+  const lx=mx2+12,ly=my2-6;
+  ctx.fillText(`${mv>=0?'+':''}${mv.toFixed(1)} cm`,lx,ly);
+}
+
+// ── CALCULATION ───────────────────────────────────────────
+function runCalc(){
+  const dc=parseFloat(document.getElementById('s-dc').value);
+  if(isNaN(dc)){alert('Bitte Drop Code eingeben.');return;}
+
+  const date=document.getElementById('s-date').value||today();
+  const m200=shotMean(200);
+  const m300=shotMean(300);
+
+  if(m200===null&&m300===null){
+    alert('Bitte mindestens einen Treffer eingeben.');return;
+  }
+
+  // Theoretical drops (for reference / chart)
+  const prof=getProfile();
+  const tTheo=trajectory(prof.v0,prof.bc,prof.sh,100,720);
+  const theo200=dropAt(tTheo,200);
+  const theo300=dropAt(tTheo,300);
+
+  const session={
+    id:Date.now(),date,dropCode:dc,
+    shots200:shots[200].slice(),shots300:shots[300].slice(),
+    mean200:m200,mean300:m300,
+    theo200:r1(theo200),theo300:r1(theo300)
+  };
+
+  const all=getSessions();
+  all.push(session);
+  storeSessions(all);
+
+  // Compute recommendation with new session included
+  const rec=computeRecommendation(dc);
+
+  showResult(session,rec);
+  renderHistory();
+  updateDirVisibility();
+}
+
+function showResult(s,rec){
+  let heroHtml='';
+  if(rec.recDC!==null){
+    const diff=rec.diff;
+    const dir=diff>0?'▲ erhöhen':diff<0?'▼ senken':'✓ bereits optimal';
+    const col=diff>0?'var(--green)':diff<0?'var(--red)':'var(--accent)';
+    heroHtml=`
+      <div class="result-hero">
+        <div class="rl">Empfohlener Drop Code</div>
+        <div class="rv">${rec.recDC}</div>
+        <div class="rs" style="color:${col}">${dir} &nbsp;(${Math.abs(diff)} Einheiten)</div>
+      </div>`;
+  } else {
+    heroHtml=`
+      <div class="result-hero" style="border-color:var(--border)">
+        <div class="rl">Empfohlener Drop Code</div>
+        <div class="rv" style="font-size:36px;color:var(--text2)">—</div>
+      </div>`;
+  }
+
+  let calHtml='';
+  if(rec.factor!==null){
+    calHtml=`
+      <div class="cal-badge">
+        <strong>Kalibrierungsfaktor:</strong> 1 Drop-Code-Einheit ≈ ${(1/parseFloat(rec.factor)).toFixed(2)} cm bei 300 m<br>
+        ${rec.r2!==null?`Qualität der Annäherung: ${(rec.r2*100).toFixed(0)}%`:''}
+      </div>`;
+  } else {
+    calHtml=`<div class="notice">${rec.note||''}</div>`;
+  }
+
+  const ra=document.getElementById('result-area');
+  ra.innerHTML=`
+    <div class="card">
+      <div class="card-title">Ergebnis</div>
+      ${heroHtml}
+      ${calHtml}
+      ${rec.note&&rec.factor?`<div class="notice" style="margin-top:0">${rec.note}</div>`:''}
+      ${s.mean200!==null?`<div class="info-row">
+        <span class="k">Abweichung 200 m</span>
+        <span class="v" style="color:${s.mean200>=0?'var(--green)':'var(--red)'}">
+          ${fmt(s.mean200)} cm</span></div>`:''}
+      ${s.mean300!==null?`<div class="info-row">
+        <span class="k">Abweichung 300 m</span>
+        <span class="v" style="color:${s.mean300>=0?'var(--green)':'var(--red)'}">
+          ${fmt(s.mean300)} cm</span></div>`:''}
+      ${s.theo200!==null?`<div class="info-row">
+        <span class="k">Theo. Abfall 200 m</span>
+        <span class="v">${Math.abs(s.theo200).toFixed(1)} cm</span></div>`:''}
+      ${s.theo300!==null?`<div class="info-row">
+        <span class="k">Theo. Abfall 300 m</span>
+        <span class="v">${Math.abs(s.theo300).toFixed(1)} cm</span></div>`:''}
+    </div>`;
+
+  ra.scrollIntoView({behavior:'smooth'});
+}
+
+// ── HISTORY ───────────────────────────────────────────────
+function renderHistory(){
+  const all=getSessions().slice().reverse();
+  const el=document.getElementById('history-list');
+  if(!all.length){
+    el.innerHTML=`<div class="empty"><div class="ico">🎯</div>
+      <p>Noch keine Sessions gespeichert.</p></div>`;
+    return;
+  }
+  el.innerHTML=all.map(s=>`
+    <div class="session-card">
+      <div class="sc-top">
+        <div>
+          <div class="sc-date">${s.date}</div>
+          <div class="sc-label">Drop Code</div>
+          <div class="sc-dc">${s.dropCode}</div>
+        </div>
+        <div style="text-align:right">
+          <button class="sc-del" onclick="deleteSession(${s.id})">✕ Löschen</button>
+        </div>
+      </div>
+      <div class="sc-stats">
+        ${s.mean200!==null?`<div class="sc-stat">200 m: <span style="color:${s.mean200>=0?'var(--green)':'var(--red)'}">${fmt(s.mean200)} cm</span></div>`:''}
+        ${s.mean300!==null?`<div class="sc-stat">300 m: <span style="color:${s.mean300>=0?'var(--green)':'var(--red)'}">${fmt(s.mean300)} cm</span></div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function deleteSession(id){
+  const all=getSessions().filter(s=>s.id!==id);
+  storeSessions(all);
+  renderHistory();
+}
+
+// ── KURVE ─────────────────────────────────────────────────
+function renderKurve(){
+  renderBallisticChart();
+  renderCalInfo();
+}
+
+function renderBallisticChart(){
+  const cv=document.getElementById('cal-chart');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#080a0e';ctx.fillRect(0,0,W,H);
+
+  const prof=getProfile();
+  const tTheo=trajectory(prof.v0,prof.bc,prof.sh,100,720);
+  const sessions=getSessions();
+
+  const pad={t:16,r:12,b:34,l:46};
+  const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  const maxX=720;
+
+  const drops=tTheo.filter(p=>p.x>=50).map(p=>p.drop);
+  const minDrop=Math.max(Math.min(-60,...drops),-200);
+  const maxDrop=10;
+
+  function sc(d,dr){
+    return[pad.l+(d/maxX)*pw, pad.t+((maxDrop-dr)/(maxDrop-minDrop))*ph];
+  }
+
+  // Grid
+  ctx.strokeStyle='#181e2c';ctx.lineWidth=1;
+  [0,100,200,300,500,DIST_750YD].forEach(d=>{
+    const[x]=sc(d,0);ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ph);ctx.stroke();
+  });
+  const gridDrops=[];
+  for(let d=Math.ceil(minDrop/15)*15;d<=maxDrop;d+=15)gridDrops.push(d);
+  gridDrops.forEach(d=>{
+    const[,y]=sc(0,d);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();
+  });
+
+  // Zero line
+  ctx.strokeStyle='#2a3348';ctx.lineWidth=1.5;
+  const[,zy]=sc(0,0);ctx.beginPath();ctx.moveTo(pad.l,zy);ctx.lineTo(pad.l+pw,zy);ctx.stroke();
+
+  // Labels
+  ctx.fillStyle='#4a5268';ctx.font='9px -apple-system';ctx.textAlign='center';
+  [100,200,300,500,DIST_750YD].forEach(d=>{
+    const[x]=sc(d,0);ctx.fillText(d===DIST_750YD?'750yd':d+'m',x,H-3);
+  });
+  ctx.textAlign='right';
+  gridDrops.forEach(d=>{
+    const[,y]=sc(0,d);ctx.fillText(d+'cm',pad.l-3,y+3);
+  });
+
+  // Theoretical curve
+  ctx.strokeStyle='#5b9bd5';ctx.lineWidth=2;ctx.beginPath();
+  let first=true;
+  tTheo.filter((_,i)=>i%5===0).forEach(p=>{
+    const[x,y]=sc(p.x,p.drop);
+    first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fitted real curves per session (using theoretical + deviation shift)
+  if(sessions.length){
+    const last=sessions[sessions.length-1];
+    if(last.mean300!==null){
+      // Estimate effective trajectory: shift theoretical by mean deviation pattern
+      const shift300=last.mean300; // deviation at 300m
+      const shift200=last.mean200||0;
+      ctx.strokeStyle='#c8a84b';ctx.lineWidth=2;ctx.setLineDash([]);
+      ctx.beginPath();first=true;
+      tTheo.filter((_,i)=>i%5===0).forEach(p=>{
+        // Interpolate deviation correction based on distance
+        const frac=Math.min(p.x/300,1);
+        const shift=shift300*frac*frac; // quadratic approximation
+        const[x,y]=sc(p.x,p.drop+shift);
+        first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    }
+
+    // Measurement dots
+    sessions.forEach(s=>{
+      if(s.theo200!==null&&s.mean200!==null){
+        const[x,y]=sc(200,s.theo200+s.mean200);
+        ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);
+        ctx.fillStyle='#e05252';ctx.fill();
+      }
+      if(s.theo300!==null&&s.mean300!==null){
+        const[x,y]=sc(300,s.theo300+s.mean300);
+        ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);
+        ctx.fillStyle='#e05252';ctx.fill();
+      }
+    });
+  }
+}
+
+function renderCalInfo(){
+  const el=document.getElementById('cal-info-content');
+  const calPts=getCalibrationData();
+
+  if(calPts.length<2){
+    el.innerHTML=`
+      <p style="font-size:14px;color:var(--text2);line-height:1.6">
+        Für den Kalibrierungsfaktor werden mindestens <strong>2 Sessions mit verschiedenen Drop Codes</strong> benötigt.<br><br>
+        Aktuell: <strong>${calPts.length}</strong> verwertbare Session(s).
+      </p>`;
+    return;
+  }
+
+  const fit=linearFit(calPts.map(p=>({x:p.dc,y:p.dev300})));
+  if(!fit){
+    el.innerHTML=`<p style="font-size:14px;color:var(--text2)">Kein linearer Zusammenhang erkennbar.</p>`;
+    return;
+  }
+
+  const optDC=Math.round(-fit.intercept/fit.slope);
+  const cmPerUnit=Math.abs(1/fit.slope).toFixed(2);
+  const unitsPerCm=Math.abs(fit.slope).toFixed(3);
+
+  el.innerHTML=`
+    <div class="info-row">
+      <span class="k">Optimaler Drop Code</span>
+      <span class="v" style="color:var(--accent)">${optDC}</span>
+    </div>
+    <div class="info-row">
+      <span class="k">1 DC-Einheit entspricht</span>
+      <span class="v">${cmPerUnit} cm bei 300 m</span>
+    </div>
+    <div class="info-row">
+      <span class="k">1 cm Korrektur braucht</span>
+      <span class="v">${unitsPerCm} DC-Einheiten</span>
+    </div>
+    <div class="info-row">
+      <span class="k">Güte der Annäherung (R²)</span>
+      <span class="v">${(fit.r2*100).toFixed(0)}%</span>
+    </div>
+    <div class="info-row">
+      <span class="k">Sessions verwendet</span>
+      <span class="v">${calPts.length}</span>
+    </div>`;
+}
+
+// ── PROFILE UI ────────────────────────────────────────────
+function loadProfileUI(){
+  const p=getProfile();
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-cal').value=p.cal||'';
+  document.getElementById('p-ammo').value=p.ammo||'';
+  document.getElementById('p-v0').value=p.v0||'';
+  document.getElementById('p-bc').value=p.bc||'';
+  document.getElementById('p-sh').value=p.sh||'';
+  document.getElementById('p-basedc').value=p.basedc||180;
+  document.getElementById('p-supp').value=p.supp||'';
+}
+function saveProfile(){
+  storeProfile({
+    name:document.getElementById('p-name').value,
+    cal:document.getElementById('p-cal').value,
+    ammo:document.getElementById('p-ammo').value,
+    v0:parseFloat(document.getElementById('p-v0').value)||790,
+    bc:parseFloat(document.getElementById('p-bc').value)||0.289,
+    sh:parseFloat(document.getElementById('p-sh').value)||4.5,
+    basedc:parseFloat(document.getElementById('p-basedc').value)||180,
+    supp:document.getElementById('p-supp').value
+  });
+  const el=document.getElementById('p-saved');
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',2000);
+}
+
+// ── NAVIGATION ────────────────────────────────────────────
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='verlauf')renderHistory();
+  if(name==='kurve')renderKurve();
+  if(name==='profil')loadProfileUI();
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function today(){return new Date().toLocaleDateString('de-DE')}
+function fmt(v){return(v>=0?'+':'')+v.toFixed(1)}
+function r1(v){return v!=null?Math.round(v*10)/10:null}
+
+// ── DIRECTION TOGGLE ──────────────────────────────────────
+function getDir(){
+  try{return parseInt(_lsGet('e2_dir')||'1')}catch(e){return _memDir}
+}
+function setDir(d){
+  _memDir=d;
+  _lsSet('e2_dir',String(d));
+  document.getElementById('dir-up').classList.toggle('selected',d===1);
+  document.getElementById('dir-dn').classList.toggle('selected',d===-1);
+}
+function updateDirVisibility(){
+  // Show only when fewer than 2 calibration points exist
+  const show = getCalibrationData().length < 2;
+  document.getElementById('dir-section').style.display = show ? 'block' : 'none';
+}
+
+// ── SAFARI DETECTION ──────────────────────────────────────
+(function(){
+  // Quick Look / non-Safari: test if inputs are focusable
+  const t = document.createElement('input');
+  t.style.cssText = 'position:fixed;top:-200px;left:0;opacity:0';
+  document.body.appendChild(t);
+  t.focus();
+  setTimeout(function(){
+    if(document.activeElement !== t){
+      document.getElementById('safari-banner').style.display = 'block';
+    }
+    document.body.removeChild(t);
+  }, 200);
+})();
+
+// ── INIT ──────────────────────────────────────────────────
+try{
+  document.getElementById('s-date').value=today();
+  document.getElementById('s-dc').value=getProfile().basedc||180;
+  setDir(getDir());
+  updateDirVisibility();
+  renderShots(200);
+  renderShots(300);
+}catch(e){
+  console.error('Init error:',e);
+}
+</script>
+</body>
+</html>
