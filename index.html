@@ -507,6 +507,7 @@ function runCalc(){
     theo200:r1(dAt(tr,200)),theo300:r1(dAt(tr,300))};
   const all=getSessions();all.push(session);storeSessions(all);
   const rec=computeRec(dc);
+  session.recDC=rec.recDC;storeSessions(all);
   showResult(session,rec);
   renderHistory();
   updateDirVisibility();
