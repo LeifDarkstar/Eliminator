@@ -411,20 +411,22 @@ function computeRec(currentDC){
 
 // ── SHOTS ─────────────────────────────────────────────────
 const shots={200:[],300:[]};
-function addShot(d){shots[d].push({id:Date.now(),v:'',h:''});renderShots(d)}
+function addShot(d){shots[d].push({id:Date.now(),v:'',h:'',vSgn:1,hSgn:1});renderShots(d)}
 function removeShot(d,id){shots[d]=shots[d].filter(s=>s.id!==id);renderShots(d);drawTarget('tgt-'+d,sPts(d))}
 function shotChange(d,i,f,v){shots[d][i][f]=v;drawTarget('tgt-'+d,sPts(d))}
-function _sgn(val){return (val+'').charAt(0)==='-'?-1:1}
 function _mag(val){return (val+'').replace(/^-/,'')}
+function _sk(f){return f==='v'?'vSgn':'hSgn'}
+function _getSgn(s,f){const k=_sk(f);return s[k]!==undefined?s[k]:((s[f]+'').charAt(0)==='-'?-1:1)}
 function setShotSign(d,i,f,sgn){
-  const m=_mag(shots[d][i][f]);
-  shots[d][i][f]= m===''?'':(sgn<0?'-':'')+m;
+  const s=shots[d][i];s[_sk(f)]=sgn;
+  const m=_mag(s[f]);
+  s[f]= m===''?'':(sgn<0?'-':'')+m;
   renderShots(d);
 }
 function magChange(d,i,f,m){
   m=(m+'').replace(/[^0-9.,]/g,'').replace(',','.');
-  const sgn=_sgn(shots[d][i][f]);
-  shots[d][i][f]= m===''?'':(sgn<0?'-':'')+m;
+  const s=shots[d][i],sgn=_getSgn(s,f);
+  s[f]= m===''?'':(sgn<0?'-':'')+m;
   drawTarget('tgt-'+d,sPts(d));
 }
 function sPts(d){return shots[d].filter(s=>s.v!=='').map(s=>({v:parseFloat(s.v)||0,h:parseFloat(s.h)||0}))}
@@ -437,7 +439,7 @@ function renderShots(d){
     drawTarget('tgt-'+d,[]);return;
   }
   el.innerHTML=shots[d].map((s,i)=>{
-    const vs=_sgn(s.v),hs=_sgn(s.h);
+    const vs=_getSgn(s,'v'),hs=_getSgn(s,'h');
     return `
     <div class="shot-row">
       <div class="field"><label>Vertikal (cm)</label>

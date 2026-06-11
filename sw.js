@@ -1,4 +1,4 @@
-const CACHE = 'eliminator2-v2';
+const CACHE = 'eliminator2-v3';
 
 self.addEventListener('install', e => {
   e.waitUntil(
