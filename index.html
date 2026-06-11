@@ -387,6 +387,18 @@ function linearFit(pts){
   const ss_tot=pts.reduce((a,p)=>a+(p.y-my)**2,0);
   return{slope,intercept,r2:ss_tot>0?1-ss_res/ss_tot:1};
 }
+function recFromCal(cal,currentDC,dir){
+  if(currentDC==null||isNaN(currentDC)||!cal.length)return null;
+  if(cal.length<2){
+    const dev=cal[cal.length-1].dev300;
+    const step=Math.min(Math.abs(dev)*.8,15);
+    return Math.round(currentDC-dir*Math.sign(dev)*step);
+  }
+  const fit=linearFit(cal.map(p=>({x:p.dc,y:p.dev300})));
+  if(!fit||Math.abs(fit.slope)<.001)return null;
+  const opt=Math.round(-fit.intercept/fit.slope);
+  return Math.max(currentDC-30,Math.min(currentDC+30,opt));
+}
 function computeRec(currentDC){
   const cal=getCalibrationData();
   if(cal.length<2){
@@ -556,7 +568,14 @@ function showResult(s,rec){
 
 // ── HISTORY ───────────────────────────────────────────────
 function renderHistory(){
-  const all=getSessions().slice().reverse();
+  const chrono=getSessions();
+  const dir=getDir();
+  const recMap={};let cal=[];
+  chrono.forEach(s=>{
+    if(s.dropCode!=null&&s.mean300!=null)cal.push({dc:s.dropCode,dev300:s.mean300});
+    recMap[s.id]=recFromCal(cal,s.dropCode,dir);
+  });
+  const all=chrono.slice().reverse();
   const el=document.getElementById('history-list');
   if(!all.length){
     el.innerHTML='<div class="empty"><div class="ico">🎯</div><p>Noch keine Sessions.</p></div>';return;
@@ -569,7 +588,7 @@ function renderHistory(){
           <div class="sc-dc">${s.dropCode}</div></div>
         <div style="text-align:right">
           <button class="sc-del" onclick="deleteSession(${s.id})">✕ Löschen</button>
-          ${s.recDC!=null?`<div class="sc-label">Empfehlung</div><div class="sc-rec">${s.recDC}</div>`:''}
+          ${recMap[s.id]!=null?`<div class="sc-label">Empfehlung</div><div class="sc-rec">${recMap[s.id]}</div>`:''}
         </div>
       </div>
       <div class="sc-stats">
