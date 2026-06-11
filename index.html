@@ -78,6 +78,10 @@ body{background:var(--bg);color:var(--text);min-height:100vh;
 
 .shot-row{display:grid;grid-template-columns:1fr 1fr 48px;gap:10px;align-items:end;margin-bottom:12px}
 .shot-row .field{margin-bottom:0}
+.sign-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px}
+.sign-btn{padding:9px 2px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:9px;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer}
+.sign-btn.on{background:rgba(200,168,75,.15);border-color:var(--accent);color:var(--accent)}
 .shot-remove{
   background:var(--surface2);border:1px solid var(--border);color:var(--red);
   border-radius:12px;height:50px;display:flex;align-items:center;
@@ -410,6 +414,19 @@ const shots={200:[],300:[]};
 function addShot(d){shots[d].push({id:Date.now(),v:'',h:''});renderShots(d)}
 function removeShot(d,id){shots[d]=shots[d].filter(s=>s.id!==id);renderShots(d);drawTarget('tgt-'+d,sPts(d))}
 function shotChange(d,i,f,v){shots[d][i][f]=v;drawTarget('tgt-'+d,sPts(d))}
+function _sgn(val){return (val+'').charAt(0)==='-'?-1:1}
+function _mag(val){return (val+'').replace(/^-/,'')}
+function setShotSign(d,i,f,sgn){
+  const m=_mag(shots[d][i][f]);
+  shots[d][i][f]= m===''?'':(sgn<0?'-':'')+m;
+  renderShots(d);
+}
+function magChange(d,i,f,m){
+  m=(m+'').replace(/[^0-9.,]/g,'').replace(',','.');
+  const sgn=_sgn(shots[d][i][f]);
+  shots[d][i][f]= m===''?'':(sgn<0?'-':'')+m;
+  drawTarget('tgt-'+d,sPts(d));
+}
 function sPts(d){return shots[d].filter(s=>s.v!=='').map(s=>({v:parseFloat(s.v)||0,h:parseFloat(s.h)||0}))}
 function sMean(d){const p=sPts(d);return p.length?p.reduce((a,x)=>a+x.v,0)/p.length:null}
 
@@ -419,16 +436,26 @@ function renderShots(d){
     el.innerHTML='<p style="font-size:14px;color:var(--text2);padding:0 0 8px">Noch keine Treffer.</p>';
     drawTarget('tgt-'+d,[]);return;
   }
-  el.innerHTML=shots[d].map((s,i)=>`
+  el.innerHTML=shots[d].map((s,i)=>{
+    const vs=_sgn(s.v),hs=_sgn(s.h);
+    return `
     <div class="shot-row">
       <div class="field"><label>Vertikal (cm)</label>
-        <input type="text" inputmode="decimal" placeholder="+ oben / − unten" value="${s.v}"
-          oninput="shotChange(${d},${i},'v',this.value)"></div>
+        <div class="sign-toggle">
+          <button class="sign-btn ${vs>0?'on':''}" onclick="setShotSign(${d},${i},'v',1)">↑ Hoch</button>
+          <button class="sign-btn ${vs<0?'on':''}" onclick="setShotSign(${d},${i},'v',-1)">↓ Tief</button>
+        </div>
+        <input type="text" inputmode="decimal" placeholder="cm" value="${_mag(s.v)}"
+          oninput="magChange(${d},${i},'v',this.value)"></div>
       <div class="field"><label>Horizontal (cm)</label>
-        <input type="text" inputmode="decimal" placeholder="+ rechts" value="${s.h}"
-          oninput="shotChange(${d},${i},'h',this.value)"></div>
+        <div class="sign-toggle">
+          <button class="sign-btn ${hs>0?'on':''}" onclick="setShotSign(${d},${i},'h',1)">→ Rechts</button>
+          <button class="sign-btn ${hs<0?'on':''}" onclick="setShotSign(${d},${i},'h',-1)">← Links</button>
+        </div>
+        <input type="text" inputmode="decimal" placeholder="cm" value="${_mag(s.h)}"
+          oninput="magChange(${d},${i},'h',this.value)"></div>
       <button class="shot-remove" onclick="removeShot(${d},${s.id})">✕</button>
-    </div>`).join('');
+    </div>`;}).join('');
   drawTarget('tgt-'+d,sPts(d));
 }
 
